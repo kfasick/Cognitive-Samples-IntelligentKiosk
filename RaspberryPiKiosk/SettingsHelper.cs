@@ -71,9 +71,27 @@ namespace IntelligentKioskSample
             }
         }
 
-        private void OnSettingChanged(string propertyName, object value)
+        private async void OnSettingChanged(string propertyName, object value)
         {
-            ApplicationData.Current.RoamingSettings.Values[propertyName] = value;
+            if (propertyName == "MallKioskDemoCustomSettings")
+            {
+                // save to file as the content is too big to be saved as a string-like setting
+                StorageFile file = await ApplicationData.Current.RoamingFolder.CreateFileAsync(
+                    "MallKioskDemoCustomSettings.xml",
+                    CreationCollisionOption.ReplaceExisting);
+
+                using (Stream stream = await file.OpenStreamForWriteAsync())
+                {
+                    using (StreamWriter writer = new StreamWriter(stream))
+                    {
+                        await writer.WriteAsync(value.ToString());
+                    }
+                }
+            }
+            else
+            {
+                ApplicationData.Current.RoamingSettings.Values[propertyName] = value;
+            }
 
             instance.OnSettingsChanged();
             instance.OnPropertyChanged(propertyName);
@@ -95,12 +113,18 @@ namespace IntelligentKioskSample
             }
         }
 
-        private void LoadRoamingSettings()
+        private async void LoadRoamingSettings()
         {
             object value = ApplicationData.Current.RoamingSettings.Values["FaceApiKey"];
             if (value != null)
             {
                 this.FaceApiKey = value.ToString();
+            }
+
+            value = ApplicationData.Current.RoamingSettings.Values["FaceApiKeyRegion"];
+            if (value != null)
+            {
+                this.FaceApiKeyRegion = value.ToString();
             }
 
             value = ApplicationData.Current.RoamingSettings.Values["VisionApiKey"];
@@ -109,10 +133,40 @@ namespace IntelligentKioskSample
                 this.VisionApiKey = value.ToString();
             }
 
+            value = ApplicationData.Current.RoamingSettings.Values["VisionApiKeyRegion"];
+            if (value != null)
+            {
+                this.VisionApiKeyRegion = value.ToString();
+            }
+
+            value = ApplicationData.Current.RoamingSettings.Values["BingSearchApiKey"];
+            if (value != null)
+            {
+                this.BingSearchApiKey = value.ToString();
+            }
+
+            value = ApplicationData.Current.RoamingSettings.Values["BingAutoSuggestionApiKey"];
+            if (value != null)
+            {
+                this.BingAutoSuggestionApiKey = value.ToString();
+            }
+
             value = ApplicationData.Current.RoamingSettings.Values["WorkspaceKey"];
             if (value != null)
             {
                 this.WorkspaceKey = value.ToString();
+            }
+
+            value = ApplicationData.Current.RoamingSettings.Values["TextAnalyticsKey"];
+            if (value != null)
+            {
+                this.TextAnalyticsKey = value.ToString();
+            }
+
+            value = ApplicationData.Current.RoamingSettings.Values["TextAnalyticsApiKeyRegion"];
+            if (value != null)
+            {
+                this.TextAnalyticsApiKeyRegion = value.ToString();
             }
 
             value = ApplicationData.Current.RoamingSettings.Values["CameraName"];
@@ -160,6 +214,39 @@ namespace IntelligentKioskSample
                     this.DriverMonitoringYawningThreshold = threshold;
                 }
             }
+
+            value = ApplicationData.Current.RoamingSettings.Values["CustomVisionPredictionApiKey"];
+            if (value != null)
+            {
+                this.CustomVisionPredictionApiKey = value.ToString();
+            }
+
+            value = ApplicationData.Current.RoamingSettings.Values["CustomVisionTrainingApiKey"];
+            if (value != null)
+            {
+                this.CustomVisionTrainingApiKey = value.ToString();
+            }
+
+            // load mall kiosk demo custom settings from file as the content is too big to be saved as a string-like setting
+            try
+            {
+                using (Stream stream = await ApplicationData.Current.RoamingFolder.OpenStreamForReadAsync("MallKioskDemoCustomSettings.xml"))
+                {
+                    using (StreamReader reader = new StreamReader(stream))
+                    {
+                        this.MallKioskDemoCustomSettings = await reader.ReadToEndAsync();
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                this.RestoreMallKioskSettingsToDefaultFile();
+            }
+        }
+
+        public void RestoreMallKioskSettingsToDefaultFile()
+        {
+            this.MallKioskDemoCustomSettings = File.ReadAllText("Views\\MallKioskDemoConfig\\MallKioskDemoSettings.xml");
         }
 
         public void RestoreAllSettings()
@@ -178,6 +265,17 @@ namespace IntelligentKioskSample
             }
         }
 
+        private string faceApiKeyRegion = "westus";
+        public string FaceApiKeyRegion
+        {
+            get { return this.faceApiKeyRegion; }
+            set
+            {
+                this.faceApiKeyRegion = value;
+                this.OnSettingChanged("FaceApiKeyRegion", value);
+            }
+        }
+
         private string visionApiKey = string.Empty;
         public string VisionApiKey
         {
@@ -189,6 +287,39 @@ namespace IntelligentKioskSample
             }
         }
 
+        private string visionApiKeyRegion = "westus";
+        public string VisionApiKeyRegion
+        {
+            get { return this.visionApiKeyRegion; }
+            set
+            {
+                this.visionApiKeyRegion = value;
+                this.OnSettingChanged("VisionApiKeyRegion", value);
+            }
+        }
+
+        private string bingSearchApiKey = string.Empty;
+        public string BingSearchApiKey
+        {
+            get { return this.bingSearchApiKey; }
+            set
+            {
+                this.bingSearchApiKey = value;
+                this.OnSettingChanged("BingSearchApiKey", value);
+            }
+        }
+
+        private string bingAutoSuggestionSearchApiKey = string.Empty;
+        public string BingAutoSuggestionApiKey
+        {
+            get { return this.bingAutoSuggestionSearchApiKey; }
+            set
+            {
+                this.bingAutoSuggestionSearchApiKey = value;
+                this.OnSettingChanged("BingAutoSuggestionApiKey", value);
+            }
+        }
+
         private string workspaceKey = string.Empty;
         public string WorkspaceKey
         {
@@ -197,6 +328,39 @@ namespace IntelligentKioskSample
             {
                 this.workspaceKey = value;
                 this.OnSettingChanged("WorkspaceKey", value);
+            }
+        }
+
+        private string mallKioskDemoCustomSettings = string.Empty;
+        public string MallKioskDemoCustomSettings
+        {
+            get { return this.mallKioskDemoCustomSettings; }
+            set
+            {
+                this.mallKioskDemoCustomSettings = value;
+                this.OnSettingChanged("MallKioskDemoCustomSettings", value);
+            }
+        }
+
+        private string textAnalyticsKey = string.Empty;
+        public string TextAnalyticsKey
+        {
+            get { return textAnalyticsKey; }
+            set
+            {
+                this.textAnalyticsKey = value;
+                this.OnSettingChanged("TextAnalyticsKey", value);
+            }
+        }
+
+        private string textAnalyticsApiKeyRegion = "westus";
+        public string TextAnalyticsApiKeyRegion
+        {
+            get { return textAnalyticsApiKeyRegion; }
+            set
+            {
+                this.textAnalyticsApiKeyRegion = value;
+                this.OnSettingChanged("TextAnalyticsApiKeyRegion", value);
             }
         }
 
@@ -252,6 +416,50 @@ namespace IntelligentKioskSample
             {
                 this.driverMonitoringYawningThreshold = value;
                 this.OnSettingChanged("DriverMonitoringYawningThreshold", value);
+            }
+        }
+
+        private string customVisionTrainingApiKey = string.Empty;
+        public string CustomVisionTrainingApiKey
+        {
+            get { return this.customVisionTrainingApiKey; }
+            set
+            {
+                this.customVisionTrainingApiKey = value;
+                this.OnSettingChanged("CustomVisionTrainingApiKey", value);
+            }
+        }
+
+        private string customVisionPredictionApiKey = string.Empty;
+        public string CustomVisionPredictionApiKey
+        {
+            get { return this.customVisionPredictionApiKey; }
+            set
+            {
+                this.customVisionPredictionApiKey = value;
+                this.OnSettingChanged("CustomVisionPredictionApiKey", value);
+            }
+        }
+
+        public string[] AvailableApiRegions
+        {
+            get
+            {
+                return new string[]
+                {
+                    "westus",
+                    "westus2",
+                    "eastus",
+                    "eastus2",
+                    "westcentralus",
+                    "southcentralus",
+                    "westeurope",
+                    "northeurope",
+                    "southeastasia",
+                    "eastasia",
+                    "australiaeast",
+                    "brazilsouth"
+                };
             }
         }
     }
